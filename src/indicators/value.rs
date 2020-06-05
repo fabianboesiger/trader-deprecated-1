@@ -1,16 +1,19 @@
 use super::Indicator;
-use crate::economy::Monetary;
+use bigdecimal::Num;
 
 pub struct Value;
 
-impl Indicator for Value {
-    type Output<'a> = &'a Monetary;
+impl<N> Indicator<N> for Value
+    where
+        N: Num + 'static
+{
+    type Output<'a> = &'a N;
 
-    fn initialize(_value: &Monetary) -> Self {
+    fn initialize(_value: &N) -> Self {
         Value
     }
 
-    fn evaluate<'a>(&mut self, value: &'a Monetary) -> Self::Output<'a> {
+    fn evaluate<'a>(&mut self, value: &'a N) -> Self::Output<'a> {
         value
     }
 }

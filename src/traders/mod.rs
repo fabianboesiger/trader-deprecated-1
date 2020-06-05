@@ -1,18 +1,25 @@
-use crate::economy::Monetary;
 use crate::environments::Environment;
 use crate::indicators::Indicator;
+use bigdecimal::Num;
 
-pub enum Action {
-    Buy(Monetary, Monetary),
-    Sell(Monetary, Monetary),
+#[derive(Debug)]
+pub enum Action<N>
+    where
+        N: Num
+{
+    Buy(N, N),
+    Sell(N, N),
     Hold,
 }
 
-pub trait Trader
+pub trait Trader<N>
 where
-    Self::Subscriptions: Indicator
+    N: Num,
+    Self::Indicators: Indicator<N>
 {
-    type Subscriptions; 
+    type Indicators; 
 
-    fn evaluate(subscriptions: Self::Subscriptions) -> Action;
+    fn initialize(base: &str, quote: &str) -> Self;
+
+    fn evaluate<'a>(&mut self, subscriptions: <Self::Indicators as Indicator<N>>::Output<'a>) -> Action<N>;
 }

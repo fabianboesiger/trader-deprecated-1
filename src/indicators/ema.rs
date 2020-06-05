@@ -1,25 +1,29 @@
 use super::Indicator;
-use crate::economy::Monetary;
 use std::time::Duration;
-use bigdecimal::One;
+use bigdecimal::{Num, One};
 
-pub struct EMA<const PERIOD: Duration> {
-    ema: Monetary
+pub struct EMA<N, const PERIOD: Duration>
+    where
+        N: Num
+{
+    ema: N,
 }
 
-impl<const PERIOD: Duration> Indicator for EMA<PERIOD> {
-    type Output<'a> = &'a Monetary;
+impl<N, const PERIOD: Duration> Indicator<N> for EMA<N, PERIOD>
+    where
+        N: Num + 'static + From<f32>
+{
+    type Output<'a> = &'a N;
 
-    fn initialize(value: &Monetary) -> Self {
+    fn initialize(value: &N) -> Self {
         EMA {
-            ema: value.clone()
+            ema: *value
         }
     }
 
-    fn evaluate<'a>(&'a mut self, value: &'a Monetary) -> Self::Output<'a> {
-        let multiplier: &Monetary = &(2.0 / 1.0 + PERIOD.as_secs() as f64).into();
-        self.ema *= Monetary::one() - multiplier;
-        self.ema += value * multiplier;
+    fn evaluate<'a>(&'a mut self, value: &'a N) -> Self::Output<'a> {
+        let multiplier: N = N::from(2.0 / (1.0 + PERIOD.as_secs() as f32));
+        self.ema = *value * multiplier +  self.ema * (N::one() - multiplier);
         &self.ema
     }
 }

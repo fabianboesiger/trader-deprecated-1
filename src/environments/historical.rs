@@ -1,13 +1,13 @@
 use super::{Environment, Event};
-use crate::economy::Monetary;
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::PgPool;
 use std::time::Duration;
+use bigdecimal::{BigDecimal, Num};
 
 struct MarketValueChange {
     symbol: String,
-    value: Monetary,
+    value: BigDecimal,
     timestamp: i64,
 }
 
@@ -31,8 +31,12 @@ impl Historical {
 }
 
 #[async_trait]
-impl Environment for Historical {
-    async fn poll(&mut self) -> Event {
+impl<N> Environment<N> for Historical 
+    where
+        N: Num,
+        BigDecimal: Into<N>
+{
+    async fn poll(&mut self) -> Event<N> {
         if self.buffer.is_empty() {
             self.buffer = sqlx::query_as!(
                 MarketValueChange,
@@ -58,6 +62,6 @@ impl Environment for Historical {
         }
 
         let next = self.buffer.pop().unwrap();
-        Event::UpdateMarketValue(next.symbol, next.value)
+        Event::UpdateMarketValue(next.symbol, next.value.into())
     }
 }

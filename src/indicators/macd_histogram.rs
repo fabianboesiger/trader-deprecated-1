@@ -1,27 +1,34 @@
-use super::{Indicator, EMA};
-use crate::economy::Monetary;
+use super::{Indicator, EMA, MACD};
 use std::time::Duration;
-use bigdecimal::Zero;
+use bigdecimal::{Num, Zero};
 
-pub struct MACD<const SHORT: Duration, const LONG: Duration> {
-    macd: Monetary,
-    ema_short: EMA<SHORT>,
-    ema_long: EMA<LONG>,
+pub struct MACDHistogram<N, const SHORT: Duration, const LONG: Duration, const PERIOD: Duration>
+    where
+        N: Num
+{
+    histogram: N,
+    macd: MACD<N, SHORT, LONG>,
+    signal: EMA<N, PERIOD>,
 }
 
-impl<const SHORT: Duration, const LONG: Duration> Indicator for MACD<SHORT, LONG> {
-    type Output<'a> = &'a Monetary;
+impl<N, const SHORT: Duration, const LONG: Duration, const PERIOD: Duration> Indicator<N> for MACDHistogram<N, SHORT, LONG, PERIOD>
+    where
+        N: Num + From<f32> + 'static
+{
+    type Output<'a> = &'a N;
 
-    fn initialize(value: &Monetary) -> Self {
-        MACD {
-            macd: Monetary::zero(),
-            ema_short: EMA::initialize(value),
-            ema_long: EMA::initialize(value),
+    fn initialize(value: &N) -> Self {
+        MACDHistogram {
+            histogram: N::zero(),
+            macd: MACD::initialize(value),
+            signal: EMA::initialize(&N::zero()),
         }
     }
 
-    fn evaluate<'a>(&'a mut self, value: &'a Monetary) -> Self::Output<'a> {
-        self.macd = self.ema_short.evaluate(value) - self.ema_long.evaluate(value);
-        &self.macd
+    fn evaluate<'a>(&'a mut self, value: &'a N) -> Self::Output<'a> {
+        let macd = self.macd.evaluate(value);
+        let signal = self.signal.evaluate(macd);
+        self.histogram = *macd - *signal;
+        &self.histogram
     }
 }

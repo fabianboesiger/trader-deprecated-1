@@ -12,3 +12,4 @@ websocket = "0.24"
 dotenv = "0.15"
 bigdecimal = "0.1"
 chrono = { version = "0.4", features = ["serde"] }
+binance_api = { path = "../binance-api" }

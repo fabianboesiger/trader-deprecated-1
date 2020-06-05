@@ -1,18 +1,23 @@
 mod value;
 mod ema;
 mod macd;
+mod macd_histogram;
 
 pub use value::Value;
 pub use ema::EMA;
 pub use macd::MACD;
+pub use macd_histogram::MACDHistogram;
 
-use crate::economy::Monetary;
+use bigdecimal::Num;
 
-pub trait Indicator {
+pub trait Indicator<N>
+    where
+        N: Num
+{
     type Output<'a>;
 
-    fn initialize(value: &Monetary) -> Self;
-    fn evaluate<'a>(&'a mut self, value: &'a Monetary) -> Self::Output<'a>;
+    fn initialize(value: &N) -> Self;
+    fn evaluate<'a>(&'a mut self, value: &'a N) -> Self::Output<'a>;
 }
 
 macro_rules! peel {
@@ -22,15 +27,15 @@ macro_rules! peel {
 macro_rules! tuple {
     () => ();
     ( $($name:ident,)+ ) => {
-        impl<$($name: Indicator,)+> Indicator for ($($name,)+) {
+        impl<N: Num, $($name: Indicator<N>,)+> Indicator<N> for ($($name,)+) {
             type Output<'a> = ($($name::Output<'a>,)+);
 
-            fn initialize(value: &Monetary) -> Self {
+            fn initialize(value: &N) -> Self {
                 ($($name::initialize(value),)+)
             }
             
             #[allow(non_snake_case)]
-            fn evaluate<'a>(&'a mut self, value: &'a Monetary) -> Self::Output<'a> {
+            fn evaluate<'a>(&'a mut self, value: &'a N) -> Self::Output<'a> {
                 let ($($name,)+) = self;
                 ($($name.evaluate(value),)+)
             }
