@@ -2,15 +2,13 @@ use super::{Environment, Event, MarketData, OrderData};
 use crate::economy::Market;
 use crate::traders::Action;
 use async_trait::async_trait;
-use bigdecimal::{BigDecimal, ToPrimitive};
 use binance_async::Binance;
-use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::PgPool;
 use std::time::Duration;
 
 struct MarketValueChange {
     symbol: String,
-    value: BigDecimal,
+    value: f64,
     timestamp: i64,
 }
 
@@ -23,10 +21,10 @@ pub struct Historical {
 }
 
 impl Historical {
-    pub async fn new(start_at: DateTime<Utc>) -> Historical {
+    pub async fn new(start_at: i64) -> Historical {
         dotenv::dotenv().ok();
         Historical {
-            timestamp: start_at.timestamp(),
+            timestamp: start_at,
             buffer: Vec::new(),
             pool: PgPool::new(&std::env::var("DATABASE_URL").unwrap())
                 .await
@@ -100,7 +98,7 @@ impl Environment for Historical {
         }
 
         let next = self.buffer.pop().unwrap();
-        Event::SetMarketValue(next.symbol, next.value.to_f64().unwrap())
+        Event::SetMarketValue(next.symbol, next.value)
     }
 
     async fn order(&mut self, order: OrderData) -> Result<(), ()> {

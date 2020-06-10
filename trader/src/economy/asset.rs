@@ -1,5 +1,4 @@
 use super::Monetary;
-use bigdecimal::Zero;
 use std::ops::Mul;
 
 #[derive(Debug)]
@@ -12,7 +11,7 @@ impl Asset {
     pub fn new(symbol: String) -> Asset {
         Asset {
             symbol,
-            balance: Monetary::zero(),
+            balance: 0.0,
         }
     }
 

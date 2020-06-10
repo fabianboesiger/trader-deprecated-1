@@ -14,6 +14,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     socket.subscribe(Subscription::TickerAll).await?;
     let pool = PgPool::new(&std::env::var("DATABASE_URL")?).await?;
     let mut timestamp: Option<i64> = None;
+    let interval: i64 = std::env::var("DATA_INTERVAL")?.parse()?;
 
     // Throw away first few results for better timing.
     for _ in 0..3 {
@@ -37,7 +38,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             });
 
             // Build query.
-            let mut sql = String::from("INSERT INTO tickers (symbol, value, timestamp) VALUES");
+            let mut sql = String::new();
+            sql.push_str("WITH inserted AS (INSERT INTO tickers (symbol, value, timestamp) VALUES");
             for i in 0..tickers.len() {
                 sql.push_str(&format!(
                     " (${}, ${}, ${}),",
@@ -47,6 +49,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 ));
             }
             sql.pop();
+            sql.push_str(&format!(
+                " RETURNING timestamp) DELETE FROM tickers WHERE timestamp <= (SELECT MAX(timestamp) - {} FROM inserted)",
+                interval
+            ));
 
             // Bind values to query.
             let mut query = sqlx::query(&sql);

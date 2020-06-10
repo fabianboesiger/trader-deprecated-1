@@ -2,7 +2,6 @@ use super::{Environment, Event, MarketData, OrderData};
 use crate::economy::Market;
 use crate::traders::Action;
 use async_trait::async_trait;
-use bigdecimal::{BigDecimal, ToPrimitive};
 use binance_async::{model::websocket::Subscription, Binance, BinanceWebsocket};
 use sqlx::PgPool;
 use std::time::{Duration, SystemTime};
@@ -10,7 +9,7 @@ use tokio::stream::StreamExt;
 
 struct MarketValueChange {
     symbol: String,
-    value: BigDecimal,
+    value: f64,
     timestamp: i64,
 }
 
