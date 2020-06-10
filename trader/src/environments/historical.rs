@@ -1,12 +1,12 @@
 use super::{Environment, Event, MarketData, OrderData};
-use crate::traders::Action;
 use crate::economy::Market;
+use crate::traders::Action;
 use async_trait::async_trait;
+use bigdecimal::{BigDecimal, ToPrimitive};
+use binance_async::Binance;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::PgPool;
 use std::time::Duration;
-use bigdecimal::{BigDecimal, ToPrimitive};
-use binance_async::Binance;
 
 struct MarketValueChange {
     symbol: String,
@@ -42,9 +42,13 @@ impl Historical {
 
 #[async_trait]
 impl Environment for Historical {
-
     async fn initialize(&mut self) -> Result<Vec<MarketData>, ()> {
-        let stats = self.binance.get_24h_price_stats_all().unwrap().await.unwrap();
+        let stats = self
+            .binance
+            .get_24h_price_stats_all()
+            .unwrap()
+            .await
+            .unwrap();
         let mut symbols = Vec::new();
         for stat in stats {
             if stat.count >= 3600 {
@@ -55,8 +59,8 @@ impl Environment for Historical {
         let exchange_info = self.binance.get_exchange_info().unwrap().await.unwrap();
         let mut markets = Vec::new();
         for symbol in exchange_info.symbols {
-            if symbols.contains(&symbol.symbol) && 
-                (symbol.base_asset == "USDT" || symbol.quote_asset == "USDT")
+            if symbols.contains(&symbol.symbol)
+                && (symbol.base_asset == "USDT" || symbol.quote_asset == "USDT")
             {
                 markets.push(symbol);
             }
@@ -66,7 +70,7 @@ impl Environment for Historical {
     }
 
     async fn poll(&mut self) -> Event {
-        while let Some(event) = self.events.pop() {
+        if let Some(event) = self.events.pop() {
             return event;
         }
 
@@ -98,7 +102,7 @@ impl Environment for Historical {
         let next = self.buffer.pop().unwrap();
         Event::SetMarketValue(next.symbol, next.value.to_f64().unwrap())
     }
-    
+
     async fn order(&mut self, order: OrderData) -> Result<(), ()> {
         Ok(())
     }

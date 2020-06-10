@@ -1,14 +1,16 @@
-mod value;
 mod ema;
 mod macd;
 mod macd_histogram;
+mod rsi;
 mod sma;
+mod value;
 
-pub use value::Value;
 pub use ema::EMA;
 pub use macd::MACD;
 pub use macd_histogram::MACDHistogram;
+pub use rsi::RSI;
 pub use sma::SMA;
+pub use value::Value;
 
 use crate::economy::Monetary;
 
@@ -18,6 +20,8 @@ pub trait Indicator {
     fn initialize(value: Monetary) -> Self;
     fn evaluate(&mut self, value: Monetary) -> Self::Output;
 }
+
+pub trait MovingAverage: Indicator {}
 
 macro_rules! peel {
     ( $name:ident, $($other:ident,)* ) => (tuple! { $($other,)* })
@@ -32,7 +36,7 @@ macro_rules! tuple {
             fn initialize(value: Monetary) -> Self {
                 ($($name::initialize(value),)+)
             }
-            
+
             #[allow(non_snake_case)]
             fn evaluate(&mut self, value: Monetary) -> Self::Output {
                 let ($($name,)+) = self;

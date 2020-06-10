@@ -4,12 +4,12 @@ mod simulated;
 pub use historical::Historical;
 pub use simulated::Simulated;
 
-use crate::economy::{Monetary, Market};
+use crate::economy::{Market, Monetary};
 use crate::traders::Action;
 use async_trait::async_trait;
-use std::time::Duration;
+use binance_async::model::{Order, Symbol};
 use std::fmt::Debug;
-use binance_async::model::{Symbol, Order};
+use std::time::Duration;
 
 #[derive(Debug)]
 pub enum Event {

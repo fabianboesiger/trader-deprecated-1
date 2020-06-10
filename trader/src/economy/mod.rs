@@ -6,8 +6,8 @@ pub use market::Market;
 
 use crate::{
     environments::{Environment, Event},
-    traders::{Trader, Action},
     indicators::Indicator,
+    traders::{Action, Trader},
 };
 use std::collections::HashMap;
 use std::time::Duration;
@@ -57,15 +57,22 @@ where
             self.add_market(market.symbol, market.base_asset, market.quote_asset);
         }
 
-        println!("added {} markets: {:?}", self.markets.len(), self.markets.iter().map(|market| market.get_symbol()).collect::<Vec<&str>>());
+        println!(
+            "added {} markets: {:?}",
+            self.markets.len(),
+            self.markets
+                .iter()
+                .map(|market| market.get_symbol())
+                .collect::<Vec<&str>>()
+        );
 
         for market in &self.markets {
             self.traders.push((
                 T::initialize(
                     &self.assets[market.get_base()].get_symbol(),
-                    &self.assets[market.get_quote()].get_symbol()
+                    &self.assets[market.get_quote()].get_symbol(),
                 ),
-                None
+                None,
             ));
         }
 
@@ -75,8 +82,11 @@ where
             let event = self.environment.poll().await;
             match event {
                 Event::Evaluate => {
+                    self.uptime += Duration::from_secs(60);
                     let mut actions = Vec::new();
-                    for (market, (trader, indicator)) in self.markets.iter().zip(self.traders.iter_mut()) {
+                    for (market, (trader, indicator)) in
+                        self.markets.iter().zip(self.traders.iter_mut())
+                    {
                         let action = if let Some(value) = market.get_value() {
                             if let Some(indicator) = indicator {
                                 trader.evaluate(indicator.evaluate(value))
@@ -93,20 +103,30 @@ where
                     for (market, action) in self.markets.iter().zip(actions.iter()) {
                         match action {
                             Action::Buy(fraction, price) => {
-                                let mut sell_quantity = fraction * self.total_balance() * self.value_from_to(REFERENCE_ASSET, self.assets[market.get_quote()].get_symbol());
+                                let mut sell_quantity = fraction
+                                    * self.total_balance()
+                                    * self.value_from_to(
+                                        REFERENCE_ASSET,
+                                        self.assets[market.get_quote()].get_symbol(),
+                                    );
                                 let quote_balance = self.assets[market.get_quote()].get_balance();
                                 if quote_balance > 0.0 {
                                     if quote_balance < 2.0 * sell_quantity {
                                         sell_quantity = quote_balance;
                                     }
                                     println!("buy {} {:?}", market.get_symbol(), self.uptime);
-                                    self.assets[market.get_base()].add_balance(sell_quantity / price * 0.999);
+                                    self.assets[market.get_base()]
+                                        .add_balance(sell_quantity / price * 0.999);
                                     self.assets[market.get_quote()].add_balance(-sell_quantity);
                                 }
-
                             }
                             Action::Sell(fraction, price) => {
-                                let mut sell_quantity = fraction * self.total_balance() * self.value_from_to(REFERENCE_ASSET, self.assets[market.get_base()].get_symbol());
+                                let mut sell_quantity = fraction
+                                    * self.total_balance()
+                                    * self.value_from_to(
+                                        REFERENCE_ASSET,
+                                        self.assets[market.get_base()].get_symbol(),
+                                    );
                                 let base_balance = self.assets[market.get_base()].get_balance();
                                 if base_balance > 0.0 {
                                     if base_balance < 2.0 * sell_quantity {
@@ -114,12 +134,11 @@ where
                                     }
                                     println!("sell {} {:?}", market.get_symbol(), self.uptime);
                                     self.assets[market.get_base()].add_balance(-sell_quantity);
-                                    self.assets[market.get_quote()].add_balance(sell_quantity * price * 0.999);
+                                    self.assets[market.get_quote()]
+                                        .add_balance(sell_quantity * price * 0.999);
                                 }
-                            },
-                            Action::Hold => {
-
                             }
+                            Action::Hold => {}
                         }
                     }
 
@@ -129,7 +148,14 @@ where
                         for asset in &self.assets {
                             let balance = asset.get_balance();
                             if balance > 0.0 {
-                                println!("{} {} = {} {}", balance, asset.get_symbol(), balance * self.value_from_to(asset.get_symbol(), REFERENCE_ASSET), REFERENCE_ASSET);
+                                println!(
+                                    "{} {} = {} {}",
+                                    balance,
+                                    asset.get_symbol(),
+                                    balance
+                                        * self.value_from_to(asset.get_symbol(), REFERENCE_ASSET),
+                                    REFERENCE_ASSET
+                                );
                             }
                         }
                     }
@@ -138,12 +164,12 @@ where
                     if let Some(market) = self.get_market_mut(&symbol) {
                         market.set_value(value);
                     }
-                },
+                }
                 Event::SetAssetBalance(symbol, balance) => {
                     if let Some(asset) = self.get_asset_mut(&symbol) {
                         asset.set_balance(balance);
                     }
-                },
+                }
             }
         }
     }
@@ -169,7 +195,8 @@ where
         let quote_index = self.add_asset(quote);
         let index = self.markets.len();
         self.market_lookup.insert(symbol.clone(), index);
-        self.markets.push(Market::new(symbol, base_index, quote_index));
+        self.markets
+            .push(Market::new(symbol, base_index, quote_index));
         index
     }
 
@@ -226,7 +253,7 @@ where
                 }
             }
         }
-        
+
         0.0
     }
 

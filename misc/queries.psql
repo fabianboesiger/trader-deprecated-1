@@ -1,0 +1,10 @@
+-- Get database size in GB.
+SELECT ROUND(PG_DATABASE_SIZE('binance') / 1024^3 * 1000) / 1000 || ' GB';
+
+-- Create tickers table.
+CREATE TABLE tickers (
+	symbol VARCHAR(16),
+	value DECIMAL,
+	timestamp BIGINT,
+	PRIMARY KEY(symbol, timestamp)
+)

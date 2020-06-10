@@ -8,7 +8,7 @@ default-run = "trader"
 [dependencies]
 tokio = { version = "0.2", features = ["full"] }
 async-trait = "0.1"
-sqlx = { version = "0.3", default-features = false, features = [ "runtime-tokio", "macros", "postgres", "chrono", "bigdecimal" ] }
+sqlx = { version = "0.3", default-features = false, features = ["runtime-tokio", "macros", "postgres", "chrono", "bigdecimal"] }
 dotenv = "0.15"
 bigdecimal = "0.1"
 chrono = { version = "0.4", features = ["serde"] }

@@ -5,3 +5,7 @@ authors = ["fabianboesiger <boesiger.fabian@outlook.com>"]
 edition = "2018"
 
 [dependencies]
+tokio = { version = "0.2", features = ["full"] }
+sqlx = { version = "0.3", default-features = false, features = ["runtime-tokio", "macros", "postgres", "chrono", "bigdecimal"] }
+dotenv = "0.15"
+binance-async = { git = "https://github.com/fabianboesiger/binance-async-rs" }

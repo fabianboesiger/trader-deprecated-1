@@ -1,3 +1,7 @@
+mod rsi_trader;
+
+pub use rsi_trader::RSITrader;
+
 use crate::economy::Monetary;
 use crate::indicators::Indicator;
 
@@ -10,9 +14,9 @@ pub enum Action {
 
 pub trait Trader
 where
-    Self::Indicators: Indicator
+    Self::Indicators: Indicator,
 {
-    type Indicators; 
+    type Indicators;
 
     fn initialize(base: &str, quote: &str) -> Self;
 
