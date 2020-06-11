@@ -4,6 +4,7 @@ mod macd_histogram;
 mod rsi;
 mod sma;
 mod value;
+mod stretched_rsi;
 
 pub use ema::EMA;
 pub use macd::MACD;
@@ -11,6 +12,7 @@ pub use macd_histogram::MACDHistogram;
 pub use rsi::RSI;
 pub use sma::SMA;
 pub use value::Value;
+pub use stretched_rsi::StretchedRSI;
 
 use crate::economy::Monetary;
 

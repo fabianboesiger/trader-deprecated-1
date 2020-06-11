@@ -1,4 +1,4 @@
-use super::{Environment, Event, MarketData, OrderData};
+use super::{Environment, Event, MarketData, Order};
 use crate::economy::Market;
 use crate::traders::Action;
 use async_trait::async_trait;
@@ -94,14 +94,14 @@ impl Environment for Historical {
         if timestamp > self.timestamp {
             let duration = Duration::from_secs((timestamp - self.timestamp) as u64);
             self.timestamp = timestamp;
-            return Event::Evaluate;
+            return Event::Evaluate(0);
         }
 
         let next = self.buffer.pop().unwrap();
         Event::SetMarketValue(next.symbol, next.value)
     }
 
-    async fn order(&mut self, order: OrderData) -> Result<(), ()> {
+    async fn order(&mut self, symbol: &str, order: Order) -> Result<(), ()> {
         Ok(())
     }
 }

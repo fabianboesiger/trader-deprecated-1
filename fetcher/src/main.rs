@@ -28,9 +28,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     .duration_since(SystemTime::UNIX_EPOCH)?
                     .as_millis() as i64;
                 let expected_next = now + 1000;
-                // Check if something went wrong with the timing.
-                assert!((next - expected_next).abs() < 1000);
-                expected_next
+                // Check if something went wrong with the timing, adjust if necessary.
+                if (next - expected_next).abs() >= 500 {
+                    next
+                } else {
+                    expected_next
+                }
             } else {
                 SystemTime::now()
                     .duration_since(SystemTime::UNIX_EPOCH)?

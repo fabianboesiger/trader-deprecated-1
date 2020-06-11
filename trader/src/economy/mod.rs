@@ -7,7 +7,7 @@ pub use market::Market;
 use crate::{
     environments::{Environment, Event},
     indicators::Indicator,
-    traders::{Action, Trader},
+    traders::{Order, Action, Trader},
 };
 use std::collections::HashMap;
 use std::time::Duration;
@@ -27,7 +27,6 @@ where
     market_lookup: HashMap<String, usize>,
     asset_lookup: HashMap<String, usize>,
     traders: Vec<(T, Option<T::Indicators>)>,
-    uptime: Duration,
     reference_asset: usize,
 }
 
@@ -44,7 +43,6 @@ where
             market_lookup: HashMap::new(),
             asset_lookup: HashMap::new(),
             traders: Vec::new(),
-            uptime: Duration::from_secs(0),
             reference_asset: 0,
         }
     }
@@ -77,12 +75,10 @@ where
         }
 
         // Poll environment for events.
-        let mut last_report = self.uptime;
         loop {
             let event = self.environment.poll().await;
             match event {
-                Event::Evaluate => {
-                    self.uptime += Duration::from_secs(60);
+                Event::Evaluate(timestamp) => {
                     let mut actions = Vec::new();
                     for (market, (trader, indicator)) in
                         self.markets.iter().zip(self.traders.iter_mut())
@@ -92,59 +88,60 @@ where
                                 trader.evaluate(indicator.evaluate(value))
                             } else {
                                 *indicator = Some(T::Indicators::initialize(value));
-                                Action::Hold
+                                None
                             }
                         } else {
-                            Action::Hold
+                            None
                         };
                         actions.push(action);
                     }
 
                     for (market, action) in self.markets.iter().zip(actions.iter()) {
-                        match action {
-                            Action::Buy(fraction, price) => {
-                                let mut sell_quantity = fraction
-                                    * self.total_balance()
-                                    * self.value_from_to(
-                                        REFERENCE_ASSET,
-                                        self.assets[market.get_quote()].get_symbol(),
-                                    );
-                                let quote_balance = self.assets[market.get_quote()].get_balance();
-                                if quote_balance > 0.0 {
-                                    if quote_balance < 2.0 * sell_quantity {
-                                        sell_quantity = quote_balance;
+                        if let Some(order) = action {
+                            match order {
+                                Order::Limit(Action::Buy, fraction, price) => {
+                                    let mut sell_quantity = fraction
+                                        * self.total_balance()
+                                        * self.value_from_to(
+                                            REFERENCE_ASSET,
+                                            self.assets[market.get_quote()].get_symbol(),
+                                        );
+                                    let quote_balance = self.assets[market.get_quote()].get_balance();
+                                    if quote_balance > 0.0 {
+                                        if quote_balance < 2.0 * sell_quantity {
+                                            sell_quantity = quote_balance;
+                                        }
+                                        println!("buy {} {:?}", market.get_symbol(), timestamp);
+                                        self.assets[market.get_base()]
+                                            .add_balance(sell_quantity / price * 0.999);
+                                        self.assets[market.get_quote()].add_balance(-sell_quantity);
                                     }
-                                    println!("buy {} {:?}", market.get_symbol(), self.uptime);
-                                    self.assets[market.get_base()]
-                                        .add_balance(sell_quantity / price * 0.999);
-                                    self.assets[market.get_quote()].add_balance(-sell_quantity);
-                                }
-                            }
-                            Action::Sell(fraction, price) => {
-                                let mut sell_quantity = fraction
-                                    * self.total_balance()
-                                    * self.value_from_to(
-                                        REFERENCE_ASSET,
-                                        self.assets[market.get_base()].get_symbol(),
-                                    );
-                                let base_balance = self.assets[market.get_base()].get_balance();
-                                if base_balance > 0.0 {
-                                    if base_balance < 2.0 * sell_quantity {
-                                        sell_quantity = base_balance;
+                                },
+                                Order::Limit(Action::Sell, fraction, price) => {
+                                    let mut sell_quantity = fraction
+                                        * self.total_balance()
+                                        * self.value_from_to(
+                                            REFERENCE_ASSET,
+                                            self.assets[market.get_base()].get_symbol(),
+                                        );
+                                    let base_balance = self.assets[market.get_base()].get_balance();
+                                    if base_balance > 0.0 {
+                                        if base_balance < 2.0 * sell_quantity {
+                                            sell_quantity = base_balance;
+                                        }
+                                        println!("sell {} {:?}", market.get_symbol(), timestamp);
+                                        self.assets[market.get_base()].add_balance(-sell_quantity);
+                                        self.assets[market.get_quote()]
+                                            .add_balance(sell_quantity * price * 0.999);
                                     }
-                                    println!("sell {} {:?}", market.get_symbol(), self.uptime);
-                                    self.assets[market.get_base()].add_balance(-sell_quantity);
-                                    self.assets[market.get_quote()]
-                                        .add_balance(sell_quantity * price * 0.999);
-                                }
+                                },
+                                _ => {}
                             }
-                            Action::Hold => {}
                         }
                     }
 
-                    if self.uptime > last_report + Duration::from_secs(3600) {
-                        last_report = self.uptime;
-                        println!("total: {} USDT", self.total_balance());
+                    if timestamp % 3600 == 0 {
+                        println!("{} total: {} USDT", timestamp, self.total_balance());
                         for asset in &self.assets {
                             let balance = asset.get_balance();
                             if balance > 0.0 {

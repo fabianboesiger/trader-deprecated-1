@@ -1,7 +1,6 @@
 use super::Monetary;
 use std::ops::Mul;
 
-#[derive(Debug)]
 pub struct Asset {
     symbol: String,
     balance: Monetary,

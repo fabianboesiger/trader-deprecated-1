@@ -1,12 +1,12 @@
-use super::Monetary;
+use super::{Monetary};
 
-#[derive(Debug)]
 pub struct Market {
     symbol: String,
     value: Option<Monetary>,
     base: usize,
     quote: usize,
     fee: Monetary,
+    //filter: Vec<Box<dyn Filter>>
 }
 
 impl Market {
@@ -17,6 +17,7 @@ impl Market {
             base,
             quote,
             fee: 0.001,
+            //filter: Vec::new()
         }
     }
 

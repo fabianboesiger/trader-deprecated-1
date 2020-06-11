@@ -1,5 +1,8 @@
 -- Get database size in GB.
-SELECT ROUND(PG_DATABASE_SIZE('binance') / 1024^3 * 1000) / 1000 || ' GB';
+SELECT PG_DATABASE_SIZE('trader') / 1024^3;
+
+-- Get the size of a row in bytes.
+SELECT SUM(PG_COLUMN_SIZE(t)) / COUNT(*) FROM tickers as t;
 
 -- Create tickers table.
 CREATE TABLE tickers (
