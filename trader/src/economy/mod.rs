@@ -1,8 +1,10 @@
 mod asset;
 mod market;
+mod symbols;
 
 pub use asset::Asset;
 pub use market::Market;
+pub use symbols::{AssetSymbol, MarketSymbol};
 
 use crate::{
     environments::{Environment, Event},
@@ -11,6 +13,7 @@ use crate::{
 };
 use std::collections::HashMap;
 use std::time::Duration;
+use binance_async::model::Side;
 
 const REFERENCE_ASSET: &'static str = "USDT";
 
@@ -60,7 +63,7 @@ where
             self.markets.len(),
             self.markets
                 .iter()
-                .map(|market| market.get_symbol())
+                .map(|market| market.get_symbol().as_str())
                 .collect::<Vec<&str>>()
         );
 
@@ -96,29 +99,35 @@ where
                         actions.push(action);
                     }
 
-                    for (market, action) in self.markets.iter().zip(actions.iter()) {
-                        if let Some(order) = action {
+                    for (market, order) in self.markets.iter().zip(actions.iter()) {
+                        if let Some(order) = order {
                             match order {
                                 Order::Limit(Action::Buy, fraction, price) => {
-                                    let mut sell_quantity = fraction
+                                    let mut base_quantity = fraction
                                         * self.total_balance()
                                         * self.value_from_to(
                                             REFERENCE_ASSET,
-                                            self.assets[market.get_quote()].get_symbol(),
+                                            self.assets[market.get_base()].get_symbol(),
                                         );
                                     let quote_balance = self.assets[market.get_quote()].get_balance();
                                     if quote_balance > 0.0 {
-                                        if quote_balance < 2.0 * sell_quantity {
-                                            sell_quantity = quote_balance;
+                                        if quote_balance / price < 2.0 * base_quantity {
+                                            base_quantity = quote_balance / price;
                                         }
+
                                         println!("buy {} {:?}", market.get_symbol(), timestamp);
+                                        if let Ok(order) = market.apply_filters(Order::Limit(Action::Buy, base_quantity, *price)) {
+                                            self.environment.order(market.get_symbol(), order).await.unwrap();
+                                        }
+                                        /*
                                         self.assets[market.get_base()]
-                                            .add_balance(sell_quantity / price * 0.999);
+                                            .add_balance(sell_quantity / price * (1.0 - market.get_fee()));
                                         self.assets[market.get_quote()].add_balance(-sell_quantity);
+                                        */
                                     }
                                 },
                                 Order::Limit(Action::Sell, fraction, price) => {
-                                    let mut sell_quantity = fraction
+                                    let mut base_quantity = fraction
                                         * self.total_balance()
                                         * self.value_from_to(
                                             REFERENCE_ASSET,
@@ -126,13 +135,18 @@ where
                                         );
                                     let base_balance = self.assets[market.get_base()].get_balance();
                                     if base_balance > 0.0 {
-                                        if base_balance < 2.0 * sell_quantity {
-                                            sell_quantity = base_balance;
+                                        if base_balance < 2.0 * base_quantity {
+                                            base_quantity = base_balance;
                                         }
                                         println!("sell {} {:?}", market.get_symbol(), timestamp);
+                                        if let Ok(order) = market.apply_filters(Order::Limit(Action::Sell, base_quantity, *price)) {
+                                            self.environment.order(market.get_symbol(), order).await.unwrap();
+                                        }
+                                        /*
                                         self.assets[market.get_base()].add_balance(-sell_quantity);
                                         self.assets[market.get_quote()]
-                                            .add_balance(sell_quantity * price * 0.999);
+                                            .add_balance(sell_quantity * price * (1.0 - market.get_fee()));
+                                        */
                                     }
                                 },
                                 _ => {}
@@ -157,6 +171,31 @@ where
                         }
                     }
                 }
+                Event::ExecutedOrder(query_order, quantity) => {
+                    let market = self.get_market(&query_order.symbol).unwrap();
+                    let base = market.get_base();
+                    let quote = market.get_quote();
+                    let fee = market.get_fee();
+                    match query_order.side {
+                        Side::Buy => {
+                            self.assets[base]
+                                .add_balance(query_order.executed_qty * (1.0 - fee));
+                            self.assets[quote].add_balance(-query_order.executed_qty * query_order.price);
+                        },
+                        Side::Sell => {
+                            self.assets[base]
+                                .add_balance(-query_order.executed_qty);
+                            self.assets[quote].add_balance(query_order.executed_qty * query_order.price * (1.0 - fee));
+                        },
+                    }
+                    self.environment.update_balances(self.assets
+                        .iter()
+                        .map(|asset|
+                            (asset.get_symbol(), asset.get_balance())
+                        )
+                        .collect::<Vec<(&AssetSymbol, Monetary)>>()
+                    ).await;
+                },
                 Event::SetMarketValue(symbol, value) => {
                     if let Some(market) = self.get_market_mut(&symbol) {
                         market.set_value(value);
@@ -188,12 +227,12 @@ where
     }
 
     fn add_market(&mut self, symbol: String, base: String, quote: String) -> usize {
-        let base_index = self.add_asset(base);
-        let quote_index = self.add_asset(quote);
+        let base_index = self.add_asset(base.clone());
+        let quote_index = self.add_asset(quote.clone());
         let index = self.markets.len();
         self.market_lookup.insert(symbol.clone(), index);
         self.markets
-            .push(Market::new(symbol, base_index, quote_index));
+            .push(Market::new((base, quote), base_index, quote_index));
         index
     }
 
@@ -212,7 +251,7 @@ where
             None
         }
     }
-    /*
+    
     fn get_market(&self, symbol: &str) -> Option<&Market> {
         if let Some(index) = self.market_lookup.get(symbol) {
             Some(self.markets.get(*index).unwrap())
@@ -228,7 +267,6 @@ where
             None
         }
     }
-    */
 
     fn value_from_to(&self, from: &str, to: &str) -> Monetary {
         if from == to {

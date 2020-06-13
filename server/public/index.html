@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8"/>
+        <title>Trader</title>
+        <link rel="stylesheet" href="style.css">
+        <script src="script.js"></script>
+    </head>
+    <body>
+        <header><h1>Crypto Trading Bot</h1></header>
+        <main>
+            <div id="loading"><p>Loading Data ...</p></div>
+            <div id="stats">
+                <h2>Total</h2>
+                <p><span id="total-wrapper"><span id="total"></span> USDT</span></p>
+                <h2>Investments</h2>
+                <table>
+                    <thead>
+                        <tr><th class="asset">Asset</th><th class="balance">Amount</th><th class="balance-usdt">USDT</th></tr>
+                    </thead>
+                    <tbody id="investments">
+                    </tbody>
+                </table>
+                <h2>Rate of Profit</h2>
+                <p></p><span id="profit-wrapper"><span id="profit"></span>% per Day</span></p>
+                <p></p><span id="duration-wrapper">(Calculated over the last <span id="duration"></span> days)</span></p>
+            </div>
+        </main>
+        <footer>
+            <p>Please refer to <a href="https://github.com/fabianboesiger/trader">github.com/fabianboesiger/trader</a> for additional information on this project.</p>
+        </footer>
+    </body>
+</html>

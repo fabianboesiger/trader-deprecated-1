@@ -2,6 +2,23 @@
 
 A trading platform for Binance.
 
+## TODOs
+
+- [ ] Web interface for easy information lookup
+  - [ ] Insert inforation into database
+  - [ ] Build the website
+    - [x] Get the basics working
+    - [ ] Make it beautiful
+- [ ] Realtime simulated test
+- [ ] Implementing order functionality
+  - [ ] Filter implementation
+  - [ ] Filter testing
+  - [ ] API implementation
+  - [ ] Testing real orders
+- [ ] Earn some money
+- [ ] Code cleanup
+  - [x] Proper market and asset symbol types
+
 ## Getting Started
 
 ### Binance Account
@@ -30,6 +47,14 @@ BINANCE_API_KEY=<API KEY HERE>
 BINANCE_SECRET_KEY=<SECRET KEY HERE>
 DATABASE_URL=<postgresql://user:password@localhost/database>
 DATA_INTERVAL=<SECONDS>
+```
+
+### Choose your Trading Strategy
+
+Choose an existing trading strategy or implement a new one.
+
+```rust
+type MyTrader = StopLoss<Backoff<RSITrader<4200, 30.0, 70.0, 0.1>, 60>, "USDT", 0.95>;
 ```
 
 ### Compilation

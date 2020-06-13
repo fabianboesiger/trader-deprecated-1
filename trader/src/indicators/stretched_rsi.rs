@@ -1,19 +1,21 @@
 use super::{Indicator, MovingAverage, SMA};
 use crate::economy::Monetary;
 
-pub struct StretchedRSI<MA, const STRETCH: usize>
+pub struct StretchedRSI<MA, STRETCH>
 where
     MA: MovingAverage<Output = Option<Monetary>>,
+    STRETCH: MovingAverage<Output = Option<Monetary>>,
 {
     up: MA,
     down: MA,
     previous_value: Monetary,
-    change: SMA<STRETCH>
+    change: STRETCH
 }
 
-impl<MA, const STRETCH: usize> Indicator for StretchedRSI<MA, STRETCH>
+impl<MA, STRETCH> Indicator for StretchedRSI<MA, STRETCH>
 where
     MA: MovingAverage<Output = Option<Monetary>>,
+    STRETCH: MovingAverage<Output = Option<Monetary>>,
 {
     type Output = Option<Monetary>;
 
@@ -22,7 +24,7 @@ where
             up: MA::initialize(value),
             down: MA::initialize(value),
             previous_value: value,
-            change: SMA::initialize(0.0)
+            change: STRETCH::initialize(0.0)
         }
     }
 

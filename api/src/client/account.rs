@@ -11,6 +11,7 @@ use failure::Fallible;
 use futures::prelude::*;
 use serde_json::json;
 use std::collections::HashMap;
+use crate::model::OrderRequest;
 
 const ORDER_TYPE_LIMIT: &str = "LIMIT";
 const ORDER_TYPE_MARKET: &str = "MARKET";
@@ -19,15 +20,6 @@ const ORDER_SIDE_SELL: &str = "SELL";
 const TIME_IN_FORCE_GTC: &str = "GTC";
 
 const API_V3_ORDER: &str = "/api/v3/order";
-
-struct OrderRequest {
-    pub symbol: String,
-    pub qty: f64,
-    pub price: f64,
-    pub order_side: String,
-    pub order_type: String,
-    pub time_in_force: String,
-}
 
 impl Binance {
     // Account Information
@@ -84,7 +76,7 @@ impl Binance {
         let order = self.transport.signed_get(API_V3_ORDER, Some(params))?;
         Ok(order)
     }
-
+    /*
     // Place a LIMIT order - BUY
     pub fn limit_buy(
         &self,
@@ -166,7 +158,7 @@ impl Binance {
         let transaction = self.transport.signed_post(API_V3_ORDER, Some(params))?;
         Ok(transaction)
     }
-
+    */
     // Check an order's status
     pub fn cancel_order(
         &self,
@@ -228,7 +220,7 @@ impl Binance {
     fn build_order(order: OrderRequest) -> HashMap<&'static str, String> {
         let mut params: HashMap<&str, String> = maplit::hashmap! {
             "symbol" => order.symbol,
-            "side" => order.order_side,
+            "side" => order.order_side.to_string(),
             "type" => order.order_type,
             "quantity" => order.qty.to_string(),
         };

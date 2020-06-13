@@ -4,10 +4,38 @@ SELECT PG_DATABASE_SIZE('trader') / 1024^3;
 -- Get the size of a row in bytes.
 SELECT SUM(PG_COLUMN_SIZE(t)) / COUNT(*) FROM tickers as t;
 
--- Create tickers table.
 CREATE TABLE tickers (
 	symbol VARCHAR(16),
 	value DOUBLE PRECISION,
 	timestamp BIGINT,
 	PRIMARY KEY(symbol, timestamp)
-)
+);
+
+CREATE TABLE trades (
+	id VARCHAR(32) PRIMARY KEY,
+	symbol VARCHAR(16) NOT NULL,
+	status VARCHAR(16) NOT NULL,
+	base VARCHAR(8) REFERENCES balance(symbol) ON UPDATE CASCADE ON DELETE RESTRICT,
+	quote VARCHAR(8) REFERENCES balance(symbol) ON UPDATE CASCADE ON DELETE RESTRICT,
+	price DOUBLE PRECISION CHECK (price >= 0),
+	quantity DOUBLE PRECISION CHECK (quantity > 0),
+	executed_quantity DOUBLE PRECISION CHECK (quantity >= 0),
+	side VARCHAR(4) CHECK (side = 'BUY' OR side = 'SELL'),
+	type VARCHAR(32) CHECK (type = 'MARKET' OR type = 'LIMIT'),
+	time_in_force VARCHAR(32) CHECK (time_in_force = 'GTC' OR time_in_force = 'IOC' OR time_in_force = 'FOK')
+);
+
+CREATE TABLE balances (
+	symbol VARCHAR(8) PRIMARY KEY,
+	balance DOUBLE PRECISION NOT NULL DEFAULT 0.0
+);
+
+CREATE TABLE messages (
+	id BIGSERIAL,
+	message TEXT NOT NULL
+);
+
+CREATE TABLE totals (
+	timestamp BIGINT PRIMARY KEY,
+	total DOUBLE PRECISION NOT NULL
+);

@@ -2,16 +2,16 @@ use super::{Order, Action, Trader};
 use crate::economy::Monetary;
 use crate::indicators::{Indicator, Value, StretchedRSI, SMA};
 
-pub struct RSITrader<const PERIOD: usize, const BUY: Monetary, const SELL: Monetary, const FRACTION: Monetary> {
+pub struct RSITrader<const PERIOD: usize, const SCALE: usize, const BUY: Monetary, const SELL: Monetary, const FRACTION: Monetary> {
     previous_rsi: Monetary,
 }
 
-impl<const PERIOD: usize, const BUY: Monetary, const SELL: Monetary, const FRACTION: Monetary> Trader
-    for RSITrader<PERIOD, BUY, SELL, FRACTION>
+impl<const PERIOD: usize, const SCALE: usize, const BUY: Monetary, const SELL: Monetary, const FRACTION: Monetary> Trader
+    for RSITrader<PERIOD, SCALE, BUY, SELL, FRACTION>
 {
-    type Indicators = (Value, StretchedRSI<SMA<PERIOD>, 300>);
+    type Indicators = (Value, StretchedRSI<SMA<PERIOD>, SMA<SCALE>>);
 
-    fn initialize(base: &str, quote: &str) -> RSITrader<PERIOD, BUY, SELL, FRACTION> {
+    fn initialize(base: &str, quote: &str) -> RSITrader<PERIOD, SCALE, BUY, SELL, FRACTION> {
         RSITrader {
             previous_rsi: 50.0
         }

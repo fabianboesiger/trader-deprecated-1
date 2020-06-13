@@ -1,27 +1,30 @@
-use super::{Monetary};
+use super::{Monetary, Order, symbols::{MarketSymbol, AssetSymbol}};
+use binance_async::model::ExchangeFilter;
+
+const FEE: Monetary = 0.001;
 
 pub struct Market {
-    symbol: String,
+    symbol: MarketSymbol,
     value: Option<Monetary>,
     base: usize,
     quote: usize,
     fee: Monetary,
-    //filter: Vec<Box<dyn Filter>>
+    filters: Vec<ExchangeFilter>
 }
 
 impl Market {
-    pub fn new(symbol: String, base: usize, quote: usize) -> Market {
+    pub fn new(symbol: (String, String), base: usize, quote: usize) -> Market {
         Market {
-            symbol,
+            symbol: symbol.into(),
             value: None,
             base,
             quote,
-            fee: 0.001,
-            //filter: Vec::new()
+            fee: FEE,
+            filters: Vec::new()
         }
     }
 
-    pub fn get_symbol(&self) -> &str {
+    pub fn get_symbol(&self) -> &MarketSymbol {
         &self.symbol
     }
 
@@ -57,4 +60,24 @@ impl Market {
     pub fn get_quote(&self) -> usize {
         self.quote
     }
+
+    pub fn get_fee(&self) -> Monetary {
+        self.fee
+    }
+
+    pub fn apply_filters(&self, order: Order) -> Result<Order, ()> {
+        let mut output = Ok(order);
+        for filter in &self.filters {
+            if let Ok(order) = output {
+                output = apply_filter(filter, order);
+            } else {
+                return output;
+            }
+        }
+        output
+    }
+}
+
+fn apply_filter(filter: &ExchangeFilter, order: Order) -> Result<Order, ()> {
+    Ok(order)
 }

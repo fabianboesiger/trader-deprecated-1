@@ -33,7 +33,7 @@ async fn main() -> Fallible<()> {
         Ok(answer) => println!("{:?}", answer),
         Err(e) => println!("Error: {}", e),
     }
-
+    
     match bn.limit_buy("ETHBTC", 1., 0.1)?.await {
         Ok(answer) => println!("{:?}", answer),
         Err(e) => println!("Error: {}", e),

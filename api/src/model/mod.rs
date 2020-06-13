@@ -3,6 +3,16 @@ pub mod websocket;
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt;
+
+pub struct OrderRequest {
+    pub symbol: String,
+    pub qty: f64,
+    pub price: f64,
+    pub order_side: Side,
+    pub order_type: String,
+    pub time_in_force: String,
+}
 
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -48,13 +58,15 @@ pub struct Order {
     pub client_order_id: String,
     #[serde(with = "string_or_float")]
     pub price: f64,
-    pub orig_qty: String,
-    pub executed_qty: String,
+    #[serde(with = "string_or_float")]
+    pub orig_qty: f64,
+    #[serde(with = "string_or_float")]
+    pub executed_qty: f64,
     pub status: String,
     pub time_in_force: String,
     #[serde(rename = "type")]
     pub type_name: String,
-    pub side: String,
+    pub side: Side,
     #[serde(with = "string_or_float")]
     pub stop_price: f64,
     pub iceberg_qty: String,
@@ -456,6 +468,16 @@ pub enum Side {
     Buy,
     Sell,
 }
+
+impl fmt::Display for Side {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", match self {
+            Side::Buy => "BUY",
+            Side::Sell => "SELL"
+        })
+    }
+}
+
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]

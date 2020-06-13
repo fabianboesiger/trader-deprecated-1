@@ -1,20 +1,20 @@
-use super::Monetary;
+use super::{Monetary, symbols::AssetSymbol};
 use std::ops::Mul;
 
 pub struct Asset {
-    symbol: String,
+    symbol: AssetSymbol,
     balance: Monetary,
 }
 
 impl Asset {
     pub fn new(symbol: String) -> Asset {
         Asset {
-            symbol,
+            symbol: symbol.into(),
             balance: 0.0,
         }
     }
 
-    pub fn get_symbol(&self) -> &str {
+    pub fn get_symbol(&self) -> &AssetSymbol {
         &self.symbol
     }
 
