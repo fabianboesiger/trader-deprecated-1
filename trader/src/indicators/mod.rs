@@ -5,6 +5,7 @@ mod rsi;
 mod sma;
 mod value;
 mod stretched_rsi;
+mod smma;
 
 pub use ema::EMA;
 pub use macd::MACD;
@@ -13,6 +14,7 @@ pub use rsi::RSI;
 pub use sma::SMA;
 pub use value::Value;
 pub use stretched_rsi::StretchedRSI;
+pub use smma::SMMA;
 
 use crate::economy::Monetary;
 

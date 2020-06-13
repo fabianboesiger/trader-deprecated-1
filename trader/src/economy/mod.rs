@@ -204,6 +204,13 @@ where
                 Event::SetAssetBalance(symbol, balance) => {
                     if let Some(asset) = self.get_asset_mut(&symbol) {
                         asset.set_balance(balance);
+                        self.environment.update_balances(self.assets
+                            .iter()
+                            .map(|asset|
+                                (asset.get_symbol(), asset.get_balance())
+                            )
+                            .collect::<Vec<(&AssetSymbol, Monetary)>>()
+                        ).await;
                     }
                 }
             }

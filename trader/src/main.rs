@@ -9,15 +9,15 @@ mod traders;
 use economy::{Economy, Monetary};
 use environments::Simulated;
 use traders::{Trader, RSITrader, MACDTrader, Order, Action, Backoff, StopLoss, FullStop, GobbleBadLongterm, And, SafeAnd};
-use indicators::{Indicator, Value, StretchedRSI, SMA, EMA, MACD};
+use indicators::{Indicator, Value, StretchedRSI, SMA, SMMA, EMA, MACD, MACDHistogram};
 
-/*
+
 pub struct CustomTrader {
     previous_rsi: Monetary,
 }
 
 impl Trader for CustomTrader {
-    type Indicators = (Value, StretchedRSI<SMA<4200>, EMA<300>>, MACD<43200, 93600>);
+    type Indicators = (Value, StretchedRSI<SMMA<4200>, SMMA<300>>, MACDHistogram<21600, 46800, 16200>);
 
     fn initialize(base: &str, quote: &str) -> CustomTrader {
         CustomTrader {
@@ -26,19 +26,17 @@ impl Trader for CustomTrader {
     }
 
     fn evaluate(&mut self, (value, rsi, macd): <Self::Indicators as Indicator>::Output) -> Option<Order> {
-        if let (Some(rsi), Some(macd)) = (rsi, macd) {
+        if let (Some(rsi), Some((macd, macdh))) = (rsi, macd) {
             let action = if
                 self.previous_rsi < 30.0 &&
-                rsi >= 30.0 &&
-                macd < 0.0
+                rsi >= 30.0
             {
-                Some(Order::Limit(Action::Buy, 0.05, value))
+                Some(Order::Limit(Action::Buy, 0.05 * (1.0 + macdh.abs() / value * 10000.0), value))
             } else if
                 self.previous_rsi > 70.0 &&
-                rsi <= 70.0 &&
-                macd > 0.0
+                rsi <= 70.0
             {
-                Some(Order::Limit(Action::Sell, 0.05, value))
+                Some(Order::Limit(Action::Sell, 0.05 * (1.0 + macdh.abs() / value * 10000.0), value))
             } else {
                 None
             };
@@ -51,11 +49,13 @@ impl Trader for CustomTrader {
         }
     }
 }
-*/
+
 
 //type MyTrader = StopLoss<FullStop<GobbleBadLongterm<Backoff<RSITrader<4200, 300, 30.0, 70.0, 0.05>, 300>, "USDT">, "USDT">, "USDT", 0.98, 1200>;
 //type MyTrader = Backoff<RSITrader<4200, 300, 30.0, 70.0, 0.05>, 300>;
-type MyTrader = StopLoss<Backoff<RSITrader<4200, 300, 30.0, 70.0, 0.05>, 300>, "USDT", 0.95, 300>;
+//type MyTrader = StopLoss<Backoff<SafeAnd<MACDTrader<0.05>, RSITrader<4200, 300, 30.0, 70.0, 0.05>, "USDT">, 300>, "USDT", 0.95, 300>;
+//type MyTrader = StopLoss<Backoff<GobbleBadLongterm<RSITrader<4200, 300, 30.0, 70.0, 0.05>, "USDT">, 300>, "USDT", 0.95, 300>;
+type MyTrader = StopLoss<Backoff<RSITrader<4200, 300, 30.0, 70.0, 0.1>, 60>, "USDT", 0.95, 300>; 
 
 #[tokio::main]
 async fn main() -> Result<(), ()> {

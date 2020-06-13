@@ -19,9 +19,9 @@ impl<const PERIOD: usize> Indicator for EMA<PERIOD> {
     fn evaluate(&mut self, value: Monetary) -> Self::Output {
         self.count += 1;
 
-        let multiplier = 2.0 / (1.0 + PERIOD as f64);
-        self.ema *= 1.0 - multiplier;
-        self.ema += value * multiplier;
+        let alpha = 2.0 / (1.0 + PERIOD as f64);
+        self.ema *= 1.0 - alpha;
+        self.ema += value * alpha;
 
         if self.count >= PERIOD {
             Some(self.ema)

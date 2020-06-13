@@ -1,5 +1,5 @@
 use super::{Trader, Order, Action};
-use crate::indicators::{MACD, Indicator};
+use crate::indicators::{MACDHistogram, Indicator};
 use crate::economy::Monetary;
 
 enum Safe {
@@ -20,7 +20,7 @@ impl<T, const SAFE: &'static str> Trader for GobbleBadLongterm<T, SAFE>
     where
         T: Trader
 { 
-    type Indicators = (MACD<43200, 93600>, T::Indicators);
+    type Indicators = (MACDHistogram<21600, 46800, 16200>, T::Indicators);
 
     fn initialize(base: &str, quote: &str) -> GobbleBadLongterm<T, SAFE> {
         GobbleBadLongterm {
@@ -37,17 +37,17 @@ impl<T, const SAFE: &'static str> Trader for GobbleBadLongterm<T, SAFE>
     }
 
     fn evaluate(&mut self, (macd, output): <Self::Indicators as Indicator>::Output) -> Option<Order> {
-        if let (Some(order), Some(macd)) = (self.trader.evaluate(output), macd) {
+        if let (Some(order), Some((macd, macdh))) = (self.trader.evaluate(output), macd) {
             match (&self.safe, order) {
                 (Safe::Quote, Order::Limit(Action::Buy, quantity, value)) => {
-                    if macd < 0.0 {
+                    if macdh > 0.0 {
                         Some(Order::Limit(Action::Buy, quantity, value))
                     } else {
                         None
                     }
                 },
                 (Safe::Base, Order::Limit(Action::Sell, quantity, value)) => {
-                    if macd > 0.0 {
+                    if macdh < 0.0 {
                         Some(Order::Limit(Action::Sell, quantity, value))
                     } else {
                         None
