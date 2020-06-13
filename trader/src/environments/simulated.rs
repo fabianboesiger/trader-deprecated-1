@@ -146,7 +146,7 @@ impl Environment for Simulated {
                         continue;
                     }
 
-                    let to = std::cmp::min(3600, now - self.timestamp);
+                    let to = std::cmp::min(3600 * 24, now - self.timestamp);
                     println!("fetching historical data ...  at {}, fetching [{}-{}]", self.timestamp, self.timestamp, self.timestamp + to - 1);
                     self.buffer = sqlx::query_as!(
                         MarketValueChange,

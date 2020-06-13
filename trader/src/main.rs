@@ -31,12 +31,12 @@ impl Trader for CustomTrader {
                 self.previous_rsi < 30.0 &&
                 rsi >= 30.0
             {
-                Some(Order::Limit(Action::Buy, 0.05 * (1.0 + macdh.abs() / value * 10000.0), value))
+                Some(Order::Limit(Action::Buy, 0.01 * (1.0 + macdh.abs() / value * 10000.0), value))
             } else if
                 self.previous_rsi > 70.0 &&
                 rsi <= 70.0
             {
-                Some(Order::Limit(Action::Sell, 0.05 * (1.0 + macdh.abs() / value * 10000.0), value))
+                Some(Order::Limit(Action::Sell, 0.01 * (1.0 + macdh.abs() / value * 10000.0), value))
             } else {
                 None
             };
@@ -55,7 +55,7 @@ impl Trader for CustomTrader {
 //type MyTrader = Backoff<RSITrader<4200, 300, 30.0, 70.0, 0.05>, 300>;
 //type MyTrader = StopLoss<Backoff<SafeAnd<MACDTrader<0.05>, RSITrader<4200, 300, 30.0, 70.0, 0.05>, "USDT">, 300>, "USDT", 0.95, 300>;
 //type MyTrader = StopLoss<Backoff<GobbleBadLongterm<RSITrader<4200, 300, 30.0, 70.0, 0.05>, "USDT">, 300>, "USDT", 0.95, 300>;
-type MyTrader = StopLoss<Backoff<RSITrader<4200, 300, 30.0, 70.0, 0.1>, 60>, "USDT", 0.95, 300>; 
+type MyTrader = StopLoss<Backoff<GobbleBadLongterm<RSITrader<4200, 300, 30.0, 70.0, 0.05>, "USDT">, 60>, "USDT", 0.95, 300>; 
 
 #[tokio::main]
 async fn main() -> Result<(), ()> {
