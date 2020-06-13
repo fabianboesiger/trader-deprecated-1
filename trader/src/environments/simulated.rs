@@ -80,18 +80,32 @@ impl Environment for Simulated {
             .unwrap();
         let mut symbols = Vec::new();
         for stat in stats {
-            if stat.count >= 24 * 60 * 60 / 5 {
+            if stat.count >= 24 * 60 {
                 symbols.push(stat.symbol);
             }
         }
 
+
         let exchange_info = self.binance.get_exchange_info().unwrap().await.unwrap();
+
+        let mut to_usdt = vec![String::from("USDT")];
+        for symbol in &exchange_info.symbols {
+            if symbols.contains(&symbol.symbol) {
+                if symbol.base_asset == "USDT" && !to_usdt.contains(&symbol.quote_asset) {
+                    to_usdt.push(symbol.quote_asset.clone());
+                } else
+                if symbol.quote_asset == "USDT" && !to_usdt.contains(&symbol.base_asset) {
+                    to_usdt.push(symbol.base_asset.clone());
+                }
+            }
+        }
+
         let mut markets = Vec::new();
         for symbol in exchange_info.symbols {
-            if symbols.contains(&symbol.symbol)
-                && (symbol.base_asset == "USDT" || symbol.quote_asset == "USDT")
-            {
-                markets.push(symbol);
+            if symbols.contains(&symbol.symbol) {
+                if to_usdt.contains(&symbol.base_asset) && to_usdt.contains(&symbol.quote_asset) {
+                    markets.push(symbol);
+                }
             }
         }
 

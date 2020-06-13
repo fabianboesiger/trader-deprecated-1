@@ -50,12 +50,8 @@ impl Trader for CustomTrader {
     }
 }
 
-
-//type MyTrader = StopLoss<FullStop<GobbleBadLongterm<Backoff<RSITrader<4200, 300, 30.0, 70.0, 0.05>, 300>, "USDT">, "USDT">, "USDT", 0.98, 1200>;
-//type MyTrader = Backoff<RSITrader<4200, 300, 30.0, 70.0, 0.05>, 300>;
-//type MyTrader = StopLoss<Backoff<SafeAnd<MACDTrader<0.05>, RSITrader<4200, 300, 30.0, 70.0, 0.05>, "USDT">, 300>, "USDT", 0.95, 300>;
-//type MyTrader = StopLoss<Backoff<GobbleBadLongterm<RSITrader<4200, 300, 30.0, 70.0, 0.05>, "USDT">, 300>, "USDT", 0.95, 300>;
-type MyTrader = StopLoss<Backoff<GobbleBadLongterm<RSITrader<4200, 300, 30.0, 70.0, 0.05>, "USDT">, 60>, "USDT", 0.95, 300>; 
+//type MyTrader = StopLoss<Backoff<GobbleBadLongterm<RSITrader<4200, 300, 30.0, 70.0, 0.05>, "USDT">, 60>, "USDT", 0.97, 300>;
+type MyTrader = StopLoss<FullStop<Backoff<RSITrader<4200, 300, 20.0, 80.0, 0.05>, 60>, "USDT">, "USDT", 0.95, 300>;
 
 #[tokio::main]
 async fn main() -> Result<(), ()> {
