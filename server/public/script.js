@@ -16,26 +16,10 @@ document.addEventListener("DOMContentLoaded", event => {
         let data = JSON.parse(message.data);
         let balances = data.balances;
 
-        // Update total.
-        let roundedTotal = data.total.toFixed(2);
-        let totalElement = document.getElementById("total");
-        if (totalElement.innerHTML != roundedTotal) {
-            totalElement.innerHTML = roundedTotal;
-        }
+        updateElement(document.getElementById("total"), data.total.toFixed(2), true);
+        updateElement(document.getElementById("duration"), (data.secondsRunning / 60.0 / 60.0 / 24.0).toFixed(1));
+        updateElement(document.getElementById("profit"), (data.profitPerDay * 100.0).toFixed(2));
 
-        let roundedDays = (data.secondsRunning / 60.0 / 60.0 / 24.0).toFixed(1);
-        let durationElement = document.getElementById("duration");
-        if (durationElement.innerHTML != roundedDays) {
-            durationElement.innerHTML = roundedDays;
-        }
-
-        let roundedProfit = (data.profitPerDay * 100.0).toFixed(2);
-        let profitElement = document.getElementById("profit");
-        if (profitElement.innerHTML != roundedProfit) {
-            profitElement.innerHTML = roundedProfit;
-        }
-
-        // Update investments.
         let assetRows = document.getElementsByClassName("asset-row");
         for (let i = 0; i < assetRows.length; i++) {
             assetRows[i].classList.add("untouched");
@@ -48,13 +32,9 @@ document.addEventListener("DOMContentLoaded", event => {
                 if (balance.balance !== 0.0) {
                     element.classList.remove("untouched");
                     let balanceElement = element.getElementsByClassName("balance")[0];
-                    if (balanceElement.innerHTML != roundedBalance) {
-                        balanceElement.innerHTML = roundedBalance;
-                    }
+                    updateElement(balanceElement, roundedBalance);
                     let balanceElementUSDT = element.getElementsByClassName("balance-usdt")[0];
-                    if (balanceElementUSDT.innerHTML != roundedBalanceUSDT) {
-                        balanceElementUSDT.innerHTML = roundedBalanceUSDT;
-                    }
+                    updateElement(balanceElementUSDT, roundedBalanceUSDT, true);
                 } else {
                     element.outerHTML = "";
                 }
@@ -71,3 +51,24 @@ document.addEventListener("DOMContentLoaded", event => {
 
     };
 });
+
+
+function updateElement(element, update, color = false) {
+    element
+    if (element.innerHTML != update) {
+        if (element.innerHTML !== "" && color) {
+            if (element.innerHTML < update) {
+                element.classList.remove("loss");
+                element.classList.add("win");
+            } else
+            if (element.innerHTML > update) {
+                element.classList.remove("win");
+                element.classList.add("loss");
+            }
+        }
+        element.innerHTML = update;
+    } else {
+        //element.classList.remove("win");
+        //element.classList.remove("loss");
+    }
+}

@@ -30,10 +30,18 @@ table {
 }
 
 a {
-    color: #58f;
+    color: #35f;
 }
 
 main {
     border-top: 1px solid #eee;
     border-bottom: 1px solid #eee;
+}
+
+.win {
+    color: #2a2;
+}
+
+.loss {
+    color: #a22;
 }
